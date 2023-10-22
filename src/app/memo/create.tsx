@@ -1,20 +1,50 @@
 import { View, TextInput, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
+import { collection, addDoc, Timestamp } from 'firebase/firestore'
+import { useState } from 'react'
 
 import CircleButton from '../../components/CircleButton'
 import Icon from '../../components/Icon'
+import { db, auth } from '../../config'
 
-const handlePress = (): void => {
-    router.back()
-}
+const handlePress = (bodyText: string): void => {
+    if (auth.currentUser === null) { return }
+    const ref = collection(db, `users/${auth.currentUser.uid}/memos`)
+    addDoc(ref, {
+         bodyText,
+         updatedAt: Timestamp.fromDate(new Date())
+    })
+    .then((docRef) => {
+        console.log('success', docRef.id)
+        router.back()
+    })
+    .catch((error) => {
+        console.log(error)
+    })
+    /*
+   await addDoc(collection(db, 'memos'), {
+    bodyText: 'test 2'
+   })
+   .catch((error) => {
+    console.log(error)
+   })
+   router.back()
+       */
+ }
 
 const Create = (): JSX.Element => {
+    const [bodyText, setBodyText] = useState('')
     return (
         <View style={styles.container}>
             <View style={styles.inputContainer}>
-              <TextInput multiline style={styles.input} value='' />
+              <TextInput
+               multiline
+               style={styles.input}
+               value={bodyText}
+               onChangeText={(text) => { setBodyText(text) }}
+                />
             </View>
-            <CircleButton onPress={handlePress}>
+            <CircleButton onPress={() => { handlePress(bodyText) }}>
                <Icon name='check' size={40} color='#ffffff' />
             </CircleButton>
         </View>
